@@ -1,0 +1,69 @@
+--NOME DOS CLIENTES DEPENDETES E NOME DE QUEM DEPENDEM
+--Para isso criei duas tabelas (Clientes dependentes e Clientes não dependentes) e relacionei elas. Cada tabela tem um JOIN para trazer os nomes.
+-- SELECT CD.nome AS 'Nome', CND.nome AS 'Dependente de' 
+-- FROM
+-- --Clientes dependentes
+-- (
+-- SELECT CC.id_conta, CL.nome, CC.dependente
+-- FROM cliente_conta AS CC
+-- JOIN cliente AS CL
+-- ON CC.id_cliente=CL.id
+-- WHERE CC.dependente=1
+-- ORDER BY CC.id_conta
+-- ) AS CD,
+-- --Clientes NÃO dependentes:
+-- (
+-- SELECT CC2.id_conta, CL2.nome, CC2.dependente
+-- FROM cliente_conta AS CC2
+-- JOIN cliente AS CL2
+-- ON CC2.id_cliente=CL2.id
+-- WHERE CC2.dependente=0
+-- ORDER BY CC2.id_conta
+-- ) AS CND
+-- WHERE CD.id_conta=CND.id_conta;  --Parâmetro em comúm das duas tabelas 
+
+
+
+-- As 5 CONTAS com mais transações:
+SELECT CO.numero AS 'Número_de_conta', COUNT (*) AS 'Número_de_transações'
+FROM transacao AS T
+JOIN cliente_conta AS CC
+ON CC.id=T.id_cliente_conta
+JOIN conta AS CO --Adicionando a tabela conta para pegar os números de conta
+ON CO.id=CC.id_conta
+GROUP BY Número_de_conta --Necessario para contar por grupos e não TODOS os valores, vai diretamente relacionado com a primeira linha SELECT CO.numero AS 'Número_de_conta', COUNT (*)
+ORDER BY Número_de_transações DESC
+LIMIT 5;
+
+-- As 5 CONTAS com menos transações:
+SELECT CO.numero AS 'Número_de_conta', COUNT (*) AS 'Número_de_transações'
+FROM transacao AS T
+JOIN cliente_conta AS CC
+ON CC.id=T.id_cliente_conta
+JOIN conta AS CO --Adicionando a tabela conta para pegar os números de conta
+ON CO.id=CC.id_conta
+GROUP BY Número_de_conta
+ORDER BY Número_de_transações
+
+
+-- SALDO TOTAL DE TRANSAÇÕES DE CADA NÚMERO DE CONTA --
+SELECT
+    CO.numero AS 'Número de conta',
+    --Usei ROUND para mostrar só duas casas decimais (centavos) e o CASE WHEN para fazer a condição
+    ROUND(SUM(CASE WHEN descricao = 'depósito' THEN valor ELSE 0 END),2) AS "Total de depósitos (+)",
+    ROUND(SUM(CASE WHEN descricao = 'saque' THEN valor ELSE 0 END),2) AS "Total de Saques (-)",
+    ROUND(SUM(CASE WHEN descricao = 'pagar conta' THEN valor ELSE 0 END),2) AS "Total de pago de contas (-)",
+    ROUND(SUM(CASE WHEN descricao = 'transferencia' THEN valor ELSE 0 END),2) AS "Total de transferências (+)",
+    ROUND(SUM(CASE WHEN descricao = 'depósito' THEN valor ELSE 0 END)-SUM(CASE WHEN descricao = 'saque' THEN valor ELSE 0 END)-SUM(CASE WHEN descricao = 'pagar conta' THEN valor ELSE 0 END)+SUM(CASE WHEN descricao = 'transferencia' THEN valor ELSE 0 END),2) AS "SALDO TOTAL"
+FROM transacao AS T
+JOIN tipo_transacao AS TT
+	ON T.id_tipo_transacao = TT.id
+JOIN cliente_conta AS CC --Adicionando a tabela cliente_conta
+ON CC.id=T.id_cliente_conta
+JOIN conta AS CO --Adicionando a tabela conta para pegar os números de conta
+ON CO.id=CC.id_conta
+GROUP BY CC.id_conta
+ORDER BY CC.id_conta;
+
+
+LIMIT 5;
